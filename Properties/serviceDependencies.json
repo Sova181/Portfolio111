@@ -3,6 +3,14 @@
     "mssql1": {
       "type": "mssql",
       "connectionId": "ConnectionStrings:Portfolio111Context"
+    },
+    "secrets1": {
+      "type": "secrets"
+    },
+    "postgresql1": {
+      "type": "postgresql",
+      "connectionId": "PostsController.cs",
+      "dynamicId": null
     }
   }
 }
