@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Portfolio111.Data;
 using Portfolio111.Models;
 
 namespace Portfolio111.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PostsController : ControllerBase
+    public class PostsController : Controller
     {
         private readonly Portfolio111Context _context;
 
@@ -21,83 +19,134 @@ namespace Portfolio111.Controllers
             _context = context;
         }
 
-        // GET: api/Posts
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Posts>>> GetPosts()
+        // GET: Posts
+        public async Task<IActionResult> Index()
         {
-            return await _context.Posts.ToListAsync();
+            return View(await _context.Posts.ToListAsync());
         }
 
-        // GET: api/Posts/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Posts>> GetPosts(long id)
+        // GET: Posts/Details/5
+        public async Task<IActionResult> Details(long? id)
         {
-            var posts = await _context.Posts.FindAsync(id);
+            if (id == null)
+            {
+                return NotFound();
+            }
 
+            var posts = await _context.Posts
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (posts == null)
             {
                 return NotFound();
             }
 
-            return posts;
+            return View(posts);
         }
 
-        // PUT: api/Posts/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPosts(long id, Posts posts)
+        // GET: Posts/Create
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Posts/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,Title,Description,Author")] Posts posts)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(posts);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(posts);
+        }
+
+        // GET: Posts/Edit/5
+        public async Task<IActionResult> Edit(long? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var posts = await _context.Posts.FindAsync(id);
+            if (posts == null)
+            {
+                return NotFound();
+            }
+            return View(posts);
+        }
+
+        // POST: Posts/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(long id, [Bind("Id,Title,Description,Author")] Posts posts)
         {
             if (id != posts.Id)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(posts).State = EntityState.Modified;
-
-            try
+            if (ModelState.IsValid)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PostsExists(id))
+                try
                 {
-                    return NotFound();
+                    _context.Update(posts);
+                    await _context.SaveChangesAsync();
                 }
-                else
+                catch (DbUpdateConcurrencyException)
                 {
-                    throw;
+                    if (!PostsExists(posts.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
+                return RedirectToAction(nameof(Index));
             }
-
-            return NoContent();
+            return View(posts);
         }
 
-        // POST: api/Posts
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Posts>> PostPosts(Posts posts)
+        // GET: Posts/Delete/5
+        public async Task<IActionResult> Delete(long? id)
         {
-            _context.Posts.Add(posts);
-            await _context.SaveChangesAsync();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            return CreatedAtAction("GetPosts", new { id = posts.Id }, posts);
-        }
-
-        // DELETE: api/Posts/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePosts(long id)
-        {
-            var posts = await _context.Posts.FindAsync(id);
+            var posts = await _context.Posts
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (posts == null)
             {
                 return NotFound();
             }
 
-            _context.Posts.Remove(posts);
-            await _context.SaveChangesAsync();
+            return View(posts);
+        }
 
-            return NoContent();
+        // POST: Posts/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(long id)
+        {
+            var posts = await _context.Posts.FindAsync(id);
+            if (posts != null)
+            {
+                _context.Posts.Remove(posts);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         private bool PostsExists(long id)
